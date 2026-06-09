@@ -73,12 +73,12 @@ Nextflow and provide a list of all parameters
 available for the workflow as well as an example command:
 
 ```
-nextflow run epi2me-labs/wf-basecalling --help
+nextflow run windforclouds/wf-basecalling --help
 ```
 To update a workflow to the latest version on the command line use
 the following command:
 ```
-nextflow pull epi2me-labs/wf-basecalling
+nextflow pull windforclouds/wf-basecalling
 ```
 
 A demo dataset is provided for testing of the workflow.
@@ -89,7 +89,7 @@ tar -xzvf wf-basecalling-demo.tar.gz
 ```
 The workflow can then be run with the downloaded demo data using:
 ```
-nextflow run epi2me-labs/wf-basecalling \
+nextflow run windforclouds/wf-basecalling \
 	--basecaller_cfg 'dna_r10.4.1_e8.2_400bps_hac@v5.0.0' \
 	--dorado_ext 'pod5' \
 	--input 'wf-basecalling-demo/input' \
@@ -280,7 +280,7 @@ Find related protocols in the [Nanopore community](https://community.nanoporetec
 
 ## FAQs
 
-If your question is not answered here, please report any issues or suggestions on the [github issues](https://github.com/epi2me-labs/wf-basecalling/issues) page or start a discussion on the [community](https://community.nanoporetech.com/).
+If your question is not answered here, please report any issues or suggestions on the [github issues](https://github.com/windforclouds/wf-basecalling/issues) page or start a discussion on the [community](https://community.nanoporetech.com/).
 
 
 
@@ -290,6 +290,5 @@ If your question is not answered here, please report any issues or suggestions o
 + [Importing third-party workflows into EPI2ME Labs](https://labs.epi2me.io/nexflow-for-epi2melabs/)
 
 See the [EPI2ME website](https://labs.epi2me.io/) for lots of other resources and blog posts.
-
 
 
