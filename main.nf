@@ -44,6 +44,23 @@ process bamstats {
 }
 
 
+process barcode_stats {
+    label "wf_common"
+    cpus 1
+    memory "4GB"
+    input:
+        path barcode_files
+    output:
+        path "barcode_stats.json", emit: json
+    script:
+    """
+    barcode_stats.py \
+        --output barcode_stats.json \
+        ${barcode_files}
+    """
+}
+
+
 // Scan step for accumulating fastcat stats
 //
 // Nextflow scan does a silly thing where it feeds back the growing list of
@@ -161,6 +178,7 @@ process makeReport {
     input:
         path per_read_stats
         path pairings
+        path barcode_summary
         path "versions/*"
         path "params.json"
     output:
@@ -168,6 +186,7 @@ process makeReport {
     script:
         String report_name = "wf-basecalling-report.html"
         def report_pairings = params.duplex ? "--pairings ${pairings}/*" : ""
+        def report_barcodes = params.barcode_kit ? "--barcode_stats ${barcode_summary}" : ""
     """
     report.py $report_name \
         --sample_name $params.sample_name \
@@ -175,6 +194,7 @@ process makeReport {
         --stats $per_read_stats \
         --params params.json \
         --workflow_version ${workflow.manifest.version} \
+        $report_barcodes \
         $report_pairings
     """
 }
@@ -354,6 +374,11 @@ workflow {
     stat = bamstats(basecaller_out.chunked_pass_crams, ref_cache)
     stats = progressive_stats.scan(stat.json)
 
+    barcode_summary = Channel.fromPath("${projectDir}/data/OPTIONAL_FILE", checkIfExists: true).first()
+    if (params.barcode_kit) {
+        barcode_summary = barcode_stats(basecaller_out.barcode_bams).json
+    }
+
     // stream pair stats for report
     // use first() to coerce this to a value channel
     pairings = Channel.fromPath("${projectDir}/data/OPTIONAL_FILE", checkIfExists: true).first()
@@ -382,7 +407,7 @@ workflow {
             .concat(basecaller_out.fail.flatten())
     }
     // Make the report
-    report = makeReport(stats, pairings, software_versions, workflow_params) | last | collect | output_last
+    report = makeReport(stats, pairings, barcode_summary, software_versions, workflow_params) | last | collect | output_last
 
     // Create IGV if the reference genome is passed
     if (params.ref && params.igv && params.output_fmt!='fastq'){
@@ -429,6 +454,7 @@ workflow {
         emit_xam
         | concat(
             pairings.last(),
+            barcode_summary,
             software_versions,
             workflow_params,
             igv_conf

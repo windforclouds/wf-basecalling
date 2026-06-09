@@ -60,6 +60,48 @@ def main(args):
                         )
                         EZChart(plt, THEME)
 
+    if args.barcode_stats:
+        with report.add_section("Barcode summary", "Barcode summary"):
+            with open(args.barcode_stats) as f:
+                data = json.load(f)
+            barcode_data = data.get("barcodes", [])
+            if not barcode_data:
+                p("No barcoded reads found.")
+            else:
+                df_barcodes = pd.DataFrame(barcode_data)
+                df_barcodes = df_barcodes.rename(columns={
+                    "barcode": "Barcode",
+                    "files": "Number of files",
+                    "reads": "Number of reads",
+                })
+                total_reads = df_barcodes["Number of reads"].sum()
+                df_barcodes["Percent of reads"] = 0
+                if total_reads:
+                    df_barcodes["Percent of reads"] = (
+                        df_barcodes["Number of reads"] / total_reads * 100
+                    ).round(2)
+                df_barcodes = df_barcodes[
+                    [
+                        "Barcode",
+                        "Number of reads",
+                        "Percent of reads",
+                        "Number of files",
+                    ]]
+                DataTable.from_pandas(
+                    df_barcodes, use_index=False, export=True,
+                    file_name=(
+                        f'{args.sample_name}-wf-basecalling-barcode-summary'))
+                plt = ezc.barplot(
+                    data=df_barcodes, x="Barcode", y="Number of reads")
+                plt._fig.add_layout(
+                    Title(
+                        text="Number of reads per barcode.",
+                        text_font_size="1.5em"
+                    ),
+                    'above'
+                )
+                EZChart(plt, THEME)
+
     # If pairing rates are provided, show them.
     if args.pairings:
         with report.add_section("Pairing summary", "Pairing summary"):
@@ -99,6 +141,9 @@ def argparser():
         "--stats", nargs='*', help="Fastcat per-read stats file(s).")
     parser.add_argument(
         "--pairings", nargs='*', help="Pairing per-chunk stats.", required=False)
+    parser.add_argument(
+        "--barcode_stats", help="Barcode demultiplexing summary JSON.",
+        required=False)
     parser.add_argument(
         "--sample_name", required=True, help="Sample name.")
     parser.add_argument(
