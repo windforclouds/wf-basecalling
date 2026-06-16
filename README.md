@@ -166,8 +166,8 @@ wf-basecalling can perform the basecalling as the pod5 files are generated. To e
 ### 6. Barcode classification and demultiplexing
 
 wf-basecalling can perform data demultiplexing by providing the appropriate barcoding kit with the `--barcode_kit` option.
-This will generate a new `{{ out_dir }}/demuxed` directory, with one subfolder for each barcode and one additional `unclassified` folder for reads that cannot be demultiplexed. This option is not available for `dorado duplex`.
-Please note that the demultiplexed reads will always be in BAM format, even when the user sets `--output_bam false`.
+This will generate a new `{{ out_dir }}/demuxed` directory containing one compressed FASTQ file per barcode and one additional `unclassified.fastq.gz` file for reads that cannot be demultiplexed. This option is not available for `dorado duplex`.
+Please note that the demultiplexed reads will always be written as `fastq.gz`, regardless of `--output_fmt`.
 
 
 
@@ -200,7 +200,7 @@ Please note that the demultiplexed reads will always be in BAM format, even when
 | remora_cfg | string | Name of the model to use for calling modified bases. | Required for calling modified bases while basecalling. The model list only shows models that are compatible with this workflow. |  |
 | dorado_ext | string | File extension for Dorado inputs. | Set this to fast5 if you have not converted your fast5 to pod5. It is recommended to [convert existing fast5 files to pod5 for use with Dorado](https://github.com/nanoporetech/pod5-file-format/blob/master/python/README.md#pod5-convert-from-fast5). | pod5 |
 | poly_a_config | string | Provide this TOML file to turn on and configure dorado poly(A) calling. | This TOML file allows you to turn on and configure poly(A) tail calling options in dorado. This feature is described [here](https://github.com/nanoporetech/dorado?tab=readme-ov-file#polya-tail-estimation). |  |
-| barcode_kit | string | Name of the kit to use for barcoding. Demultiplex the data. | Providing a kit here will instruct the workflow to demultiplex your 'pass' data to BAM files, which can be found in your output directory under the folder 'demuxed' in a structure reminiscent of MinKNOW. |  |
+| barcode_kit | string | Name of the kit to use for barcoding. Demultiplex the data. | Providing a kit here will instruct the workflow to demultiplex your 'pass' data to compressed FASTQ files directly under the 'demuxed' output directory. |  |
 
 
 ### Advanced basecalling options
@@ -290,5 +290,4 @@ If your question is not answered here, please report any issues or suggestions o
 + [Importing third-party workflows into EPI2ME Labs](https://labs.epi2me.io/nexflow-for-epi2melabs/)
 
 See the [EPI2ME website](https://labs.epi2me.io/) for lots of other resources and blog posts.
-
 

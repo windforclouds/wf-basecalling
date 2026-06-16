@@ -227,7 +227,7 @@
                     "title": "Sequencing kit name",
                     "type": "string",
                     "description": "Name of the kit to use for barcoding. Demultiplex the data.",
-                    "help_text": "Providing a kit here will instruct the workflow to demultiplex your 'pass' data to BAM files, which can be found in your output directory under the folder 'demuxed' in a structure reminiscent of MinKNOW.",
+                    "help_text": "Providing a kit here will instruct the workflow to demultiplex your 'pass' data to compressed FASTQ files directly under the 'demuxed' output directory.",
                     "enum": [
                         "EXP-NBD103",
                         "EXP-NBD104",

@@ -237,27 +237,35 @@ process split_calls {
     memory "14.4GB"
     publishDir "${params.out_dir}/demuxed",
         mode: 'copy',
-        pattern: "demuxed/**/*.${output_extension}",
-        saveAs: { fn ->
-            // Input: demuxed/sample_id/run_id/fastq_pass/barcode01/file.fastq
-            // Output: sample_id/run_id/fastq_pass/barcode01/file.fastq
-            fn.replaceFirst("demuxed/", "")
-        }
+        pattern: "demuxed/*.fastq.gz"
     input:
         path(cram, stageAs: "crams/*")
         tuple path(ref_cache), env(REF_PATH)
-        val output_fmt
     output:
-        path("demuxed/**/*.${output_extension}")
+        path("demuxed/*.fastq.gz")
     script:
-    // CW-4509: as described [here](https://github.com/nanoporetech/dorado#Demultiplexing-mapped-reads)
-    // to preserve mapping information when demuxing, we need to ask for
-    // `--no-trim`. Being aligned, it is also worth ask for it to be sorted/indexed.
-    def is_aligned = params.ref ? "--no-trim --sort-bam" : ""
-    def emit_fastq = output_fmt == "fastq" ? "--emit-fastq" : ""
-    output_extension = output_fmt == "fastq" ? "fastq" : "bam"  // nodef: used in output
     """
-    dorado demux --output-dir demuxed ${is_aligned} ${emit_fastq} --no-classify --recursive crams
+    dorado demux --output-dir demux_raw --emit-fastq --no-classify --recursive crams
+
+    shopt -s nullglob
+    mkdir demuxed
+    while IFS= read -r -d '' fq; do
+        barcode=\$(echo "\$fq" | grep -Eio '(barcode[0-9]+|unclassified)' | tail -n 1)
+        if [[ -z "\$barcode" ]]; then
+            barcode="unknown"
+        fi
+        barcode=\$(echo "\$barcode" | tr '[:upper:]' '[:lower:]')
+        if [[ "\$fq" == *.gz ]]; then
+            gzip -cd "\$fq" >> "demuxed/\${barcode}.fastq"
+        else
+            cat "\$fq" >> "demuxed/\${barcode}.fastq"
+        fi
+    done < <(find demux_raw -type f \\( -name '*.fastq' -o -name '*.fq' -o -name '*.fastq.gz' -o -name '*.fq.gz' \\) -print0)
+
+    for fq in demuxed/*.fastq; do
+        gzip -c "\$fq" > "\${fq}.gz"
+        rm "\$fq"
+    done
     """
 }
 
@@ -427,7 +435,7 @@ workflow wf_dorado {
             fail = merge_fail_calls(margs.input_ref, crams.fail.collect(), "fail", output_exts)
         }
         if (params.barcode_kit) {
-            barcode_bams = split_calls(crams.pass.collect(), margs.input_cache, margs.output_fmt)
+            barcode_bams = split_calls(crams.pass.collect(), margs.input_cache)
         } else {
             barcode_bams = Channel.empty()
         }

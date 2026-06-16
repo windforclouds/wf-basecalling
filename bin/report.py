@@ -2,6 +2,7 @@
 """Create workflow report."""
 import argparse
 import json
+from math import pi
 
 from bokeh.models import Title
 from dominate.tags import p
@@ -17,6 +18,26 @@ from ezcharts.util import get_named_logger  # noqa: ABS101
 
 
 THEME = 'epi2melabs'
+
+
+def format_barcode_plot(plt, barcode_count):
+    """Adjust barcode summary plot labels for larger barcode kits."""
+    fig = plt._fig
+    fig.xaxis.axis_label = "Barcode"
+    fig.yaxis.axis_label = "Number of reads"
+    fig.min_border_bottom = 80
+
+    if barcode_count > 48:
+        fig.width = 1800
+        fig.height = 520
+        fig.xaxis.major_label_orientation = pi / 2
+        fig.xaxis.major_label_text_font_size = "8pt"
+        fig.min_border_bottom = 110
+    elif barcode_count > 12:
+        fig.width = 1100
+        fig.height = 460
+        fig.xaxis.major_label_orientation = pi / 4
+        fig.xaxis.major_label_text_font_size = "9pt"
 
 
 def main(args):
@@ -93,6 +114,7 @@ def main(args):
                         f'{args.sample_name}-wf-basecalling-barcode-summary'))
                 plt = ezc.barplot(
                     data=df_barcodes, x="Barcode", y="Number of reads")
+                format_barcode_plot(plt, len(df_barcodes))
                 plt._fig.add_layout(
                     Title(
                         text="Number of reads per barcode.",
